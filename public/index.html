@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Expense Tracker</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <!-- Toast container -->
+  <div id="toast-container"></div>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <span class="brand-icon">💰</span>
+      <span class="brand-name">Expense Tracker</span>
+    </div>
+    <div class="navbar-tabs">
+      <button class="tab-btn active" data-tab="dashboard">📊 Dashboard</button>
+      <button class="tab-btn" data-tab="transactions">💸 Transactions</button>
+      <button class="tab-btn" data-tab="budget">🎯 Budget</button>
+      <button class="tab-btn" data-tab="reports">📋 Reports</button>
+    </div>
+    <button id="theme-toggle" class="theme-toggle" title="Toggle dark/light mode">🌙</button>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main-content">
+
+    <!-- ======== DASHBOARD TAB ======== -->
+    <section id="tab-dashboard" class="tab-content active">
+      <div class="section-header">
+        <h2>Dashboard</h2>
+        <button class="btn btn-primary" id="quick-add-btn">+ Add Transaction</button>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="cards-grid">
+        <div class="card summary-card income-card">
+          <div class="card-icon">📈</div>
+          <div class="card-info">
+            <span class="card-label">Total Income</span>
+            <span class="card-value" id="total-income">$0.00</span>
+          </div>
+        </div>
+        <div class="card summary-card expense-card">
+          <div class="card-icon">📉</div>
+          <div class="card-info">
+            <span class="card-label">Total Expenses</span>
+            <span class="card-value" id="total-expenses">$0.00</span>
+          </div>
+        </div>
+        <div class="card summary-card balance-card">
+          <div class="card-icon">💰</div>
+          <div class="card-info">
+            <span class="card-label">Net Balance</span>
+            <span class="card-value" id="net-balance">$0.00</span>
+          </div>
+        </div>
+        <div class="card summary-card savings-card">
+          <div class="card-icon">🏦</div>
+          <div class="card-info">
+            <span class="card-label">Savings Rate</span>
+            <span class="card-value" id="savings-rate">0%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="charts-grid">
+        <div class="card chart-card">
+          <h3>Expenses by Category</h3>
+          <div class="chart-container">
+            <canvas id="categoryChart"></canvas>
+          </div>
+        </div>
+        <div class="card chart-card">
+          <h3>Monthly Overview (Last 6 Months)</h3>
+          <div class="chart-container">
+            <canvas id="monthlyChart"></canvas>
+          </div>
+        </div>
+        <div class="card chart-card chart-wide">
+          <h3>Daily Spending (This Month)</h3>
+          <div class="chart-container">
+            <canvas id="dailyChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Transactions -->
+      <div class="card">
+        <div class="card-header">
+          <h3>Recent Transactions</h3>
+          <button class="btn btn-sm btn-outline" id="view-all-btn">View All</button>
+        </div>
+        <div id="recent-transactions-list" class="transaction-list">
+          <div class="empty-state">No transactions yet</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======== TRANSACTIONS TAB ======== -->
+    <section id="tab-transactions" class="tab-content">
+      <div class="section-header">
+        <h2>Transactions</h2>
+        <button class="btn btn-primary" id="add-transaction-btn">+ Add Transaction</button>
+      </div>
+
+      <!-- Filters -->
+      <div class="card filters-card">
+        <div class="filters-row">
+          <select id="filter-type" class="filter-input">
+            <option value="">All Types</option>
+            <option value="income">Income</option>
+            <option value="expense">Expense</option>
+          </select>
+          <select id="filter-category" class="filter-input">
+            <option value="">All Categories</option>
+          </select>
+          <input type="date" id="filter-start" class="filter-input" placeholder="Start Date" />
+          <input type="date" id="filter-end" class="filter-input" placeholder="End Date" />
+          <button class="btn btn-outline" id="apply-filters-btn">Filter</button>
+          <button class="btn btn-ghost" id="clear-filters-btn">Clear</button>
+        </div>
+      </div>
+
+      <!-- Transactions Table -->
+      <div class="card">
+        <div class="table-responsive">
+          <table class="data-table" id="transactions-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Title</th>
+                <th>Category</th>
+                <th>Type</th>
+                <th class="text-right">Amount</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="transactions-tbody">
+              <tr><td colspan="6" class="empty-state">No transactions found</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <!-- Pagination -->
+        <div class="pagination" id="pagination"></div>
+      </div>
+    </section>
+
+    <!-- ======== BUDGET TAB ======== -->
+    <section id="tab-budget" class="tab-content">
+      <div class="section-header">
+        <h2>Budget Goals</h2>
+        <button class="btn btn-primary" id="add-budget-btn">+ Set Budget</button>
+      </div>
+
+      <!-- Month Selector -->
+      <div class="card filters-card">
+        <div class="filters-row">
+          <select id="budget-month" class="filter-input"></select>
+          <select id="budget-year" class="filter-input"></select>
+          <button class="btn btn-outline" id="load-budgets-btn">Load</button>
+        </div>
+      </div>
+
+      <div id="budget-list" class="budget-grid">
+        <div class="empty-state">No budgets set for this month</div>
+      </div>
+    </section>
+
+    <!-- ======== REPORTS TAB ======== -->
+    <section id="tab-reports" class="tab-content">
+      <div class="section-header">
+        <h2>Reports</h2>
+        <button class="btn btn-outline" id="export-csv-btn">⬇️ Export CSV</button>
+      </div>
+
+      <!-- Filters -->
+      <div class="card filters-card">
+        <div class="filters-row">
+          <select id="report-type" class="filter-input">
+            <option value="">All Types</option>
+            <option value="income">Income</option>
+            <option value="expense">Expense</option>
+          </select>
+          <select id="report-category" class="filter-input">
+            <option value="">All Categories</option>
+          </select>
+          <input type="date" id="report-start" class="filter-input" />
+          <input type="date" id="report-end" class="filter-input" />
+          <button class="btn btn-outline" id="run-report-btn">Run Report</button>
+        </div>
+      </div>
+
+      <!-- Stats Cards -->
+      <div class="cards-grid" id="report-stats">
+        <div class="card summary-card">
+          <div class="card-icon">📊</div>
+          <div class="card-info">
+            <span class="card-label">Total Income</span>
+            <span class="card-value income" id="rpt-income">$0.00</span>
+          </div>
+        </div>
+        <div class="card summary-card">
+          <div class="card-icon">💸</div>
+          <div class="card-info">
+            <span class="card-label">Total Expenses</span>
+            <span class="card-value expense" id="rpt-expense">$0.00</span>
+          </div>
+        </div>
+        <div class="card summary-card">
+          <div class="card-icon">💰</div>
+          <div class="card-info">
+            <span class="card-label">Net Balance</span>
+            <span class="card-value" id="rpt-balance">$0.00</span>
+          </div>
+        </div>
+        <div class="card summary-card">
+          <div class="card-icon">📈</div>
+          <div class="card-info">
+            <span class="card-label">Avg Transaction</span>
+            <span class="card-value" id="rpt-avg">$0.00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Category Breakdown -->
+      <div class="card">
+        <h3>Category Breakdown</h3>
+        <div id="report-categories" class="category-breakdown">
+          <div class="empty-state">Run a report to see category breakdown</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ======== MODALS ======== -->
+
+  <!-- Add/Edit Transaction Modal -->
+  <div id="transaction-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modal-title">Add Transaction</h3>
+        <button class="modal-close" id="modal-close-btn" aria-label="Close">&times;</button>
+      </div>
+      <form id="transaction-form" class="modal-body">
+        <input type="hidden" id="edit-id" />
+        <div class="form-group">
+          <label for="tx-title">Title *</label>
+          <input type="text" id="tx-title" class="form-input" placeholder="e.g. Grocery shopping" required />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="tx-amount">Amount *</label>
+            <input type="number" id="tx-amount" class="form-input" placeholder="0.00" min="0.01" step="0.01" required />
+          </div>
+          <div class="form-group">
+            <label for="tx-type">Type *</label>
+            <select id="tx-type" class="form-input" required>
+              <option value="expense">Expense</option>
+              <option value="income">Income</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="tx-category">Category *</label>
+            <select id="tx-category" class="form-input" required></select>
+          </div>
+          <div class="form-group">
+            <label for="tx-date">Date *</label>
+            <input type="date" id="tx-date" class="form-input" required />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="tx-description">Description</label>
+          <textarea id="tx-description" class="form-input" rows="2" placeholder="Optional notes..."></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" id="cancel-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="save-btn">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Category Modal -->
+  <div id="category-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="cat-modal-title">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h3 id="cat-modal-title">Add Category</h3>
+        <button class="modal-close" id="cat-modal-close">&times;</button>
+      </div>
+      <form id="category-form" class="modal-body">
+        <div class="form-group">
+          <label for="cat-name">Name *</label>
+          <input type="text" id="cat-name" class="form-input" placeholder="e.g. Gym" required />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="cat-color">Color</label>
+            <input type="color" id="cat-color" class="form-input form-color" value="#6C63FF" />
+          </div>
+          <div class="form-group">
+            <label for="cat-icon">Icon (emoji)</label>
+            <input type="text" id="cat-icon" class="form-input" placeholder="🏋️" maxlength="4" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" id="cat-cancel-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Set Budget Modal -->
+  <div id="budget-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="budget-modal-title">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h3 id="budget-modal-title">Set Budget</h3>
+        <button class="modal-close" id="budget-modal-close">&times;</button>
+      </div>
+      <form id="budget-form" class="modal-body">
+        <input type="hidden" id="budget-edit-id" />
+        <div class="form-group">
+          <label for="budget-category">Category *</label>
+          <select id="budget-category" class="form-input" required></select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="budget-amount">Budget Amount *</label>
+            <input type="number" id="budget-amount" class="form-input" placeholder="0.00" min="0.01" step="0.01" required />
+          </div>
+          <div class="form-group">
+            <label for="budget-set-month">Month *</label>
+            <select id="budget-set-month" class="form-input" required></select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="budget-set-year">Year *</label>
+          <input type="number" id="budget-set-year" class="form-input" min="2000" max="2100" required />
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" id="budget-cancel-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" class="loading-overlay hidden">
+    <div class="spinner"></div>
+  </div>
+
+  <script src="/js/app.js"></script>
+  <script src="/js/transactions.js"></script>
+  <script src="/js/charts.js"></script>
+  <script src="/js/budget.js"></script>
+  <script src="/js/reports.js"></script>
+</body>
+</html>
